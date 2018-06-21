@@ -72,6 +72,9 @@ subroutine open_files (clm,drv,rank,ix,iy,ifstep,clm_output_dir,clm_output_dir_l
      open(2007,file=clm_output_dir//'swe_out.'//cistep//'.bin.'//trim(adjustl(RI)), access=ACCESS, form=FORM) ! @ 2D output file 
      write(2007) ix,iy,iz,drv%nc,drv%nr,nz
 
+     open(2010,file=clm_output_dir//'can_out.'//cistep//'.bin.'//trim(adjustl(RI)), access=ACCESS, form=FORM) ! @ 2D output file 
+     write(2010) ix,iy,iz,drv%nc,drv%nr,nz
+
      open(2009,file=clm_output_dir//'tsoil.'//cistep//'.bin.'//trim(adjustl(RI)), access=ACCESS, form=FORM) ! @ 2D output file 
      write(2009) ix,iy,iz,drv%nc,drv%nr,nz
 
@@ -122,6 +125,9 @@ access=ACCESS, form=FORM)  ! @ 2D output file
 
      open(2007,file=clm_output_dir//'swe_out/swe_out.'//cistep//'.bin.'//trim(adjustl(RI)), access=ACCESS, form=FORM) ! @ 2D output file 
      write(2007) ix,iy,iz,drv%nc,drv%nr,nz
+
+     open(2010,file=clm_output_dir//'can_out/can_out.'//cistep//'.bin.'//trim(adjustl(RI)), access=ACCESS, form=FORM) ! @ 2D output file 
+     write(2010) ix,iy,iz,drv%nc,drv%nr,nz
 
      open(2009,file=clm_output_dir//'t_grnd/tsoil.'//cistep//'.bin.'//trim(adjustl(RI)), access=ACCESS, form=FORM) ! @ 2D output file 
      write(2009) ix,iy,iz,drv%nc,drv%nr,nz

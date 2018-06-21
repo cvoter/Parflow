@@ -4,7 +4,7 @@ subroutine clm_lsm(pressure,saturation,evap_trans,topo,porosity,pf_dz_mult,istep
 start_time,pdx,pdy,pdz,ix,iy,nx,ny,nz,nx_f,ny_f,nz_f,nz_rz,ip,npp,npq,npr,gnx,gny,rank,sw_pf,lw_pf,    &
 prcp_pf,tas_pf,u_pf,v_pf,patm_pf,qatm_pf,lai_pf,sai_pf,z0m_pf,displa_pf,                               &
 eflx_lh_pf,eflx_lwrad_pf,eflx_sh_pf,eflx_grnd_pf,                                                     &
-qflx_tot_pf,qflx_grnd_pf,qflx_soi_pf,qflx_eveg_pf,qflx_tveg_pf,qflx_in_pf,swe_pf,t_g_pf,               &
+qflx_tot_pf,qflx_grnd_pf,qflx_soi_pf,qflx_eveg_pf,qflx_tveg_pf,qflx_in_pf,swe_pf,can_pf,t_g_pf,               &
 t_soi_pf,clm_dump_interval,clm_1d_out,clm_forc_veg,clm_output_dir,clm_output_dir_length,clm_bin_output_dir,         &
 write_CLM_binary,beta_typepf,veg_water_stress_typepf,wilting_pointpf,field_capacitypf,                 &
 res_satpf,irr_typepf, irr_cyclepf, irr_ratepf, irr_startpf, irr_stoppf, irr_thresholdpf,               &
@@ -94,6 +94,7 @@ clm_last_rst,clm_daily_rst)
   real(r8) :: qflx_tveg_pf((nx+2)*(ny+2)*3)      ! h2o_flux (veg-t) output var to send to ParFlow, on grid w/ ghost nodes for current proc but nz=1 (2D)
   real(r8) :: qflx_in_pf((nx+2)*(ny+2)*3)        ! h2o_flux (infil) output var to send to ParFlow, on grid w/ ghost nodes for current proc but nz=1 (2D)
   real(r8) :: swe_pf((nx+2)*(ny+2)*3)            ! swe              output var to send to ParFlow, on grid w/ ghost nodes for current proc but nz=1 (2D)
+  real(r8) :: can_pf((nx+2)*(ny+2)*3)            ! can              output var to send to ParFlow, on grid w/ ghost nodes for current proc but nz=1 (2D)
   real(r8) :: t_g_pf((nx+2)*(ny+2)*3)            ! t_grnd           output var to send to ParFlow, on grid w/ ghost nodes for current proc but nz=1 (2D)
   real(r8) :: t_soi_pf((nx+2)*(ny+2)*(nlevsoi+2))!tsoil             output var to send to ParFlow, on grid w/ ghost nodes for current proc, but nz=10 (3D)
   real(r8) :: sw_pf((nx+2)*(ny+2)*3)             ! SW rad, passed from PF
@@ -571,6 +572,7 @@ clm_last_rst,clm_daily_rst)
         qflx_tveg_pf(l)    = clm(t)%qflx_tran_veg
         qflx_in_pf(l)      = clm(t)%qflx_infl 
         swe_pf(l)          = clm(t)%h2osno 
+        can_pf(l)          = clm(t)%h2ocan 
         t_g_pf(l)          = clm(t)%t_grnd
         qirr_pf(l)         = clm(t)%qflx_qirr
         irr_flag_pf(l)     = clm(t)%irr_flag
@@ -586,6 +588,7 @@ clm_last_rst,clm_daily_rst)
         qflx_tveg_pf(l)    = -9999.0
         qflx_in_pf(l)      = -9999.0
         swe_pf(l)          = -9999.0
+        can_pf(l)          = -9999.0
         t_g_pf(l)          = -9999.0
         qirr_pf(l)         = -9999.0
         irr_flag_pf(l)     = -9999.0

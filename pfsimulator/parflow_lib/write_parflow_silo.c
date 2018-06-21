@@ -280,6 +280,7 @@ void     WriteSiloInit(char *file_prefix)
                              "qflx_tran_veg",
                              "qflx_infl",
                              "swe_out",
+                             "can_out",
                              "t_grnd",
                              "t_soil",
                              "qflx_qirr",

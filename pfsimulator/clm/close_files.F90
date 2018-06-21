@@ -24,5 +24,6 @@ subroutine close_files (clm,drv)
   close(2007)
   close(2008)
   close(2009)
+  close(2010)
 
 end subroutine close_files

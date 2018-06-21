@@ -246,6 +246,7 @@ typedef struct {
   Vector *qflx_tran_veg;        /* trans from veg [mm/s] */
   Vector *qflx_infl;            /* infiltration [mm/s] */
   Vector *swe_out;              /* snow water equivalent [mm] */
+  Vector *can_out;              /* canopy water equivalent [mm] */
   Vector *t_grnd;               /* CLM soil surface temperature [K] */
   Vector *tsoil;                /* CLM soil temp, all 10 layers [K] */
   Grid *gridTs;                 /* New grid fro tsoi (nx*ny*10) */
@@ -744,6 +745,10 @@ SetupRichards(PFModule * this_module)
     instance_xtra->swe_out =
       NewVectorType(grid2d, 1, 1, vector_cell_centered_2D);
     InitVectorAll(instance_xtra->swe_out, 0.0);
+
+    instance_xtra->can_out =
+      NewVectorType(grid2d, 1, 1, vector_cell_centered_2D);
+    InitVectorAll(instance_xtra->can_out, 0.0);
 
     instance_xtra->t_grnd =
       NewVectorType(grid2d, 1, 1, vector_cell_centered_2D);
@@ -1403,10 +1408,10 @@ AdvanceRichards(PFModule * this_module, double start_time,      /* Starting time
   Subvector *eflx_lh_tot_sub, *eflx_lwrad_out_sub, *eflx_sh_tot_sub,
     *eflx_soil_grnd_sub, *qflx_evap_tot_sub, *qflx_evap_grnd_sub,
     *qflx_evap_soi_sub, *qflx_evap_veg_sub, *qflx_tran_veg_sub,
-    *qflx_infl_sub, *swe_out_sub, *t_grnd_sub, *tsoil_sub, *irr_flag_sub,
+    *qflx_infl_sub, *swe_out_sub, *can_out_sub, *t_grnd_sub, *tsoil_sub, *irr_flag_sub,
     *qflx_qirr_sub, *qflx_qirr_inst_sub;
   double *eflx_lh, *eflx_lwrad, *eflx_sh, *eflx_grnd, *qflx_tot, *qflx_grnd,
-    *qflx_soi, *qflx_eveg, *qflx_tveg, *qflx_in, *swe, *t_g, *t_soi, *iflag,
+    *qflx_soi, *qflx_eveg, *qflx_tveg, *qflx_in, *swe, *can, *t_g, *t_soi, *iflag,
     *qirr, *qirr_inst;
   int clm_file_dir_length;
 #endif
@@ -1972,6 +1977,7 @@ AdvanceRichards(PFModule * this_module, double start_time,      /* Starting time
           VectorSubvector(instance_xtra->qflx_tran_veg, is);
         qflx_infl_sub = VectorSubvector(instance_xtra->qflx_infl, is);
         swe_out_sub = VectorSubvector(instance_xtra->swe_out, is);
+        can_out_sub = VectorSubvector(instance_xtra->can_out, is);
         t_grnd_sub = VectorSubvector(instance_xtra->t_grnd, is);
         tsoil_sub = VectorSubvector(instance_xtra->tsoil, is);
         irr_flag_sub = VectorSubvector(instance_xtra->irr_flag, is);
@@ -2034,6 +2040,7 @@ AdvanceRichards(PFModule * this_module, double start_time,      /* Starting time
         qflx_tveg = SubvectorData(qflx_tran_veg_sub);
         qflx_in = SubvectorData(qflx_infl_sub);
         swe = SubvectorData(swe_out_sub);
+        can = SubvectorData(can_out_sub);
         t_g = SubvectorData(t_grnd_sub);
         t_soi = SubvectorData(tsoil_sub);
         iflag = SubvectorData(irr_flag_sub);
@@ -2156,7 +2163,7 @@ AdvanceRichards(PFModule * this_module, double start_time,      /* Starting time
                          qatm_data, lai_data, sai_data, z0m_data,
                          displa_data, eflx_lh, eflx_lwrad, eflx_sh,
                          eflx_grnd, qflx_tot, qflx_grnd, qflx_soi,
-                         qflx_eveg, qflx_tveg, qflx_in, swe, t_g,
+                         qflx_eveg, qflx_tveg, qflx_in, swe, can, t_g,
                          t_soi, public_xtra->clm_dump_interval,
                          public_xtra->clm_1d_out,
                          public_xtra->clm_forc_veg,
@@ -3095,6 +3102,12 @@ AdvanceRichards(PFModule * this_module, double start_time,      /* Starting time
                   instance_xtra->file_number, "SWE");
         clm_file_dumped = 1;
 
+        sprintf(file_type, "can_out");
+        WriteSilo(file_prefix, file_type, file_postfix,
+                  instance_xtra->can_out, t,
+                  instance_xtra->file_number, "CAN");
+        clm_file_dumped = 1;
+
         sprintf(file_type, "t_grnd");
         WriteSilo(file_prefix, file_type, file_postfix,
                   instance_xtra->t_grnd, t, instance_xtra->file_number,
@@ -3176,6 +3189,8 @@ AdvanceRichards(PFModule * this_module, double start_time,      /* Starting time
                    public_xtra->numCLMVarTimeVariant, "qflx_infl", 2);
         WriteCLMNC(file_prefix, nc_postfix, t, instance_xtra->swe_out,
                    public_xtra->numCLMVarTimeVariant, "swe_out", 2);
+        WriteCLMNC(file_prefix, nc_postfix, t, instance_xtra->can_out,
+                   public_xtra->numCLMVarTimeVariant, "can_out", 2);
         WriteCLMNC(file_prefix, nc_postfix, t, instance_xtra->t_grnd,
                    public_xtra->numCLMVarTimeVariant, "t_grnd", 2);
         WriteCLMNC(file_prefix, nc_postfix, t, instance_xtra->tsoil,
@@ -3226,24 +3241,26 @@ AdvanceRichards(PFModule * this_module, double start_time,      /* Starting time
           PFVLayerCopy(10, 0, instance_xtra->clm_out_grid,
                        instance_xtra->swe_out);
           PFVLayerCopy(11, 0, instance_xtra->clm_out_grid,
+                       instance_xtra->can_out);
+          PFVLayerCopy(12, 0, instance_xtra->clm_out_grid,
                        instance_xtra->t_grnd);
 
           if (public_xtra->clm_irr_type == 1
               || public_xtra->clm_irr_type == 2)
           {
-            PFVLayerCopy(12, 0, instance_xtra->clm_out_grid,
+            PFVLayerCopy(13, 0, instance_xtra->clm_out_grid,
                          instance_xtra->qflx_qirr);
           }
           if (public_xtra->clm_irr_type == 3)
           {
-            PFVLayerCopy(12, 0, instance_xtra->clm_out_grid,
+            PFVLayerCopy(13, 0, instance_xtra->clm_out_grid,
                          instance_xtra->qflx_qirr_inst);
           }
 
           for (k = 0; k < public_xtra->clm_nz; k++)
           {
             //Write out the bottom layer in the lowest index position, build upward
-            PFVLayerCopy(13 + k, k, instance_xtra->clm_out_grid,
+            PFVLayerCopy(14 + k, k, instance_xtra->clm_out_grid,
                          instance_xtra->tsoil);
           }
           /* NBE: added .C instead of writing a different write function with
@@ -3322,6 +3339,12 @@ AdvanceRichards(PFModule * this_module, double start_time,      /* Starting time
                   instance_xtra->file_number);
           WritePFBinary(file_prefix, file_postfix,
                         instance_xtra->swe_out);
+          clm_file_dumped = 1;
+
+          sprintf(file_postfix, "can_out.%05d",
+                  instance_xtra->file_number);
+          WritePFBinary(file_prefix, file_postfix,
+                        instance_xtra->can_out);
           clm_file_dumped = 1;
 
           sprintf(file_postfix, "t_grnd.%05d",
@@ -3660,6 +3683,7 @@ TeardownRichards(PFModule * this_module)
     FreeVector(instance_xtra->qflx_tran_veg);
     FreeVector(instance_xtra->qflx_infl);
     FreeVector(instance_xtra->swe_out);
+    FreeVector(instance_xtra->can_out);
     FreeVector(instance_xtra->t_grnd);
     FreeVector(instance_xtra->tsoil);
 
